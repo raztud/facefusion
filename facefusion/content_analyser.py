@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict
 from functools import lru_cache
 from time import sleep
@@ -15,6 +16,7 @@ from facefusion.vision import get_video_frame, count_video_frame_total, read_ima
 from facefusion.filesystem import resolve_relative_path
 from facefusion.download import conditional_download
 
+DISABLE_NSFW = os.environ.get("DISABLE_NSFW", "false").lower() in {"true", "1", "yes"}
 CONTENT_ANALYSER = None
 THREAD_LOCK : threading.Lock = threading.Lock()
 MODELS : Dict[str, ModelValue] =\
@@ -68,6 +70,9 @@ def analyse_stream(vision_frame : VisionFrame, video_fps : Fps) -> bool:
 
 
 def analyse_frame(vision_frame : VisionFrame) -> bool:
+	if DISABLE_NSFW:
+		return False
+
 	content_analyser = get_content_analyser()
 	vision_frame = prepare_frame(vision_frame)
 	probability = content_analyser.run(None,
